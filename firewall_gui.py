@@ -106,13 +106,6 @@ PUBLIC_DNS = [
      "desc": "Blocks malware plus ad and tracking domains."},
     {"name": "Control D (Ads + Social)", "tag": "Ads + Security", "servers": ["76.76.2.3", "76.76.10.3"],
      "desc": "Blocks malware, ads, trackers AND social-network domains (Facebook, TikTok and similar)."},
-    {"name": "Mullvad DNS (discontinued)", "tag": "Ads + Security", "servers": ["194.242.2.3", "194.242.2.4"],
-     "desc": "Variants were: adblock (ads + trackers), base (ads, trackers, malware), extended (+ social media), "
-             "family (+ adult, gambling).",
-     "note": "Mullvad shut down its public DNS on November 2, 2026 and now sponsors Quad9, so these IPs will stop "
-             "working. Use AdGuard DNS (Default) or Control D (Ads & Trackers) for the same kind of blocking.",
-     "disabled": True},
-
     # ---- Family / adult filtering ----
     {"name": "Cloudflare Family", "tag": "Family", "servers": ["1.1.1.3", "1.0.0.3"],
      "desc": "Blocks malware, phishing AND adult content. No ad blocking."},
@@ -542,7 +535,7 @@ def action_dns_apply(provider, textbox):
         fcode, fout = flush_dns_cache()
         log_text(textbox, "[OK] DNS cache flushed." if fcode == 0 else f"[WARN] Flush failed: {fout}")
         log_text(textbox, f"\n>> RESULT: {provider['name']} is now active.")
-        log_text(textbox, "Tip: click 'Open Ad-Block Test' to see what this DNS blocks.")
+        log_text(textbox, "Tip: use 'Open Ad-Block Test (Private Browser Window)' to check what this DNS blocks.")
     else:
         log_text(textbox, f"\n>> RESULT: Execution Failed.\nReason: {out}")
 
@@ -570,38 +563,60 @@ class App(ctk.CTk):
         ctk.set_default_color_theme("blue")
 
         self.title("Network Security Studio")
-        self.geometry("1000x760")
+        self.geometry("1180x900")
+        self.minsize(1040, 820)
         self.configure(fg_color="#18181b")
 
-        self.header_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.header_frame.pack(fill="x", padx=20, pady=(20, 10))
+        self.header_frame = ctk.CTkFrame(self, fg_color="#1f1f23", corner_radius=14)
+        self.header_frame.pack(fill="x", padx=20, pady=(20, 12))
         self.header_frame.grid_columnconfigure(0, weight=1)
 
-        self.title_label = ctk.CTkLabel(self.header_frame, text="Network & Exfiltration Controller", font=ctk.CTkFont(size=24, weight="bold"))
-        self.title_label.grid(row=0, column=0, sticky="w")
+        self.title_label = ctk.CTkLabel(
+            self.header_frame, text="Network Security Studio",
+            font=ctk.CTkFont(size=24, weight="bold"),
+        )
+        self.title_label.grid(row=0, column=0, sticky="w", padx=18, pady=(14, 0))
 
-        self.sub_label = ctk.CTkLabel(self.header_frame, text="Manage Windows Firewall rules and secure DNS endpoints to mitigate risks.", text_color="gray60")
-        self.sub_label.grid(row=1, column=0, sticky="w")
+        self.sub_label = ctk.CTkLabel(
+            self.header_frame,
+            text="Manage firewall rules, DNS providers, and domain blocks in one place.",
+            text_color="gray60",
+        )
+        self.sub_label.grid(row=1, column=0, sticky="w", padx=18, pady=(2, 0))
+
+        self.credit_button = ctk.CTkButton(
+            self.header_frame,
+            text="Uploaded by john503",
+            width=155,
+            height=24,
+            fg_color="transparent",
+            hover_color="#27272a",
+            text_color="#60a5fa",
+            font=ctk.CTkFont(size=11),
+            anchor="w",
+            command=lambda: webbrowser.open("https://github.com/j0hn503"),
+        )
+        self.credit_button.grid(row=2, column=0, sticky="w", padx=14, pady=(2, 12))
 
         if is_admin():
             ctk.CTkLabel(self.header_frame, text="  ADMIN  ", fg_color="#15803d", corner_radius=6,
                          font=ctk.CTkFont(size=11, weight="bold"), text_color="white"
-                         ).grid(row=0, column=1, rowspan=2, sticky="e", padx=(12, 0))
+                         ).grid(row=0, column=1, rowspan=3, sticky="e", padx=18)
         else:
             self.btn_admin = ctk.CTkButton(
                 self.header_frame, text="Limited mode — Enable admin", width=240, height=34,
                 fg_color="#b45309", hover_color="#92400e",
                 font=ctk.CTkFont(size=12, weight="bold"),
                 command=self.enable_admin)
-            self.btn_admin.grid(row=0, column=1, rowspan=2, sticky="e", padx=(12, 0))
+            self.btn_admin.grid(row=0, column=1, rowspan=3, sticky="e", padx=18)
 
-        self.tabview = ctk.CTkTabview(self, corner_radius=10, fg_color="#27272a", segmented_button_fg_color="#18181b", segmented_button_selected_color="#2563eb", segmented_button_selected_hover_color="#1d4ed8")
-        self.tabview.pack(fill="both", expand=True, padx=20, pady=(0, 20))
+        self.tabview = ctk.CTkTabview(self, corner_radius=12, fg_color="#27272a", segmented_button_fg_color="#18181b", segmented_button_selected_color="#2563eb", segmented_button_selected_hover_color="#1d4ed8")
+        self.tabview.pack(fill="both", expand=True, padx=20, pady=(0, 18))
 
-        self.tab_telegram = self.tabview.add("Telegram IPs")
-        self.tab_dns = self.tabview.add("DNS Control")
-        self.tab_advanced = self.tabview.add("Advanced DNS")
-        self.tab_hosts = self.tabview.add("Domain Block")
+        self.tab_telegram = self.tabview.add("◆ Telegram IPs")
+        self.tab_dns = self.tabview.add("◉ DNS Control")
+        self.tab_advanced = self.tabview.add("✦ Advanced DNS")
+        self.tab_hosts = self.tabview.add("⊘ Domain Block")
 
         # Group the four firewall-related tabs together under "Telegram IPs".
         inner = ctk.CTkTabview(
@@ -612,10 +627,10 @@ class App(ctk.CTk):
         )
         inner.pack(fill="both", expand=True, padx=5, pady=5)
 
-        self.tab_block = inner.add("Block")
-        self.tab_remove = inner.add("Remove")
-        self.tab_check = inner.add("Check")
-        self.tab_test = inner.add("Test Rules")
+        self.tab_block = inner.add("＋ Block")
+        self.tab_remove = inner.add("－ Remove")
+        self.tab_check = inner.add("✓ Check")
+        self.tab_test = inner.add("↗ Test Rules")
 
         self.build_standard_tab(self.tab_block, action_block, "Click below to block Telegram IPs in Windows Firewall.", "Block Telegram IPs")
         self.build_standard_tab(self.tab_remove, action_remove, "Click below to clear custom rules from Windows Firewall.", "Remove Telegram Rules")
@@ -679,7 +694,8 @@ class App(ctk.CTk):
         ctk.CTkLabel(hl, text="Block domains for other apps",
                      font=ctk.CTkFont(size=18, weight="bold")).pack(anchor="w", pady=(6, 2))
         ctk.CTkLabel(hl, text="Blocks names like discord.com or tiktok.com system-wide. This is separate from the "
-                              "Telegram IP rules, which use the firewall. The 'Telegram' button just adds a preset.",
+                              "Telegram IP rules, which use the firewall. Domains are added to the Windows hosts file; "
+                              "changes need admin permission and are backed up first.",
                      text_color="gray55", font=ctk.CTkFont(size=11), justify="left",
                      wraplength=560).pack(anchor="w")
 
@@ -702,13 +718,13 @@ class App(ctk.CTk):
         add_row.pack(fill="x", padx=16)
         self.hosts_entry = ctk.CTkEntry(add_row, height=30, font=ctk.CTkFont("Consolas", size=12),
                                         fg_color="#111113", border_width=1, border_color="#3f3f46",
-                                        placeholder_text="domain.com")
+                                        placeholder_text="example.com to block")
         self.hosts_entry.pack(side="left", fill="x", expand=True)
         self.hosts_entry.bind("<Return>", lambda _e: add_from_entry())
-        ctk.CTkButton(add_row, text="Add", width=54, height=30, fg_color="#2563eb",
+        ctk.CTkButton(add_row, text="Block domain", width=108, height=30, fg_color="#2563eb",
                       hover_color="#1d4ed8", font=ctk.CTkFont(size=12, weight="bold"),
                       command=lambda: add_from_entry()).pack(side="left", padx=(6, 0))
-        ctk.CTkButton(add_row, text="Telegram", width=84, height=30, fg_color="#27272a",
+        ctk.CTkButton(add_row, text="Telegram preset", width=116, height=30, fg_color="#27272a",
                       hover_color="#3f3f46", font=ctk.CTkFont(size=12, weight="bold"),
                       command=lambda: add_defaults()).pack(side="left", padx=(6, 0))
 
@@ -971,9 +987,9 @@ class App(ctk.CTk):
         self.dns_list_buttons = []
 
         # ---------------- Log box ----------------
-        dns_textbox = ctk.CTkTextbox(tab, height=140, font=ctk.CTkFont("Consolas", size=13), fg_color="#111113",
+        dns_textbox = ctk.CTkTextbox(tab, height=88, font=ctk.CTkFont("Consolas", size=12), fg_color="#111113",
                                      text_color="#e4e4e7", corner_radius=8, border_width=1, border_color="#3f3f46")
-        dns_textbox.grid(row=3, column=0, sticky="ew", padx=5, pady=(5, 5))
+        dns_textbox.grid(row=3, column=0, sticky="ew", padx=5, pady=(4, 5))
         log_text(dns_textbox, "1) Pick a filter  2) Pick a provider  3) Click 'Apply this DNS'.\n"
                               "Changes apply to every active adapter. For your TP-Link, enter the same IPs in the router's DNS settings.")
 
@@ -1036,7 +1052,7 @@ class App(ctk.CTk):
         bar.grid(row=2, column=0, sticky="ew", pady=(5, 0))
         bar.grid_columnconfigure((0, 1), weight=1)
 
-        btn_test = ctk.CTkButton(bar, text="Open Ad-Block Test (Private)", height=40, font=ctk.CTkFont(weight="bold"),
+        btn_test = ctk.CTkButton(bar, text="Open Ad-Block Test (Private Browser Window)", height=40, font=ctk.CTkFont(weight="bold"),
                                  fg_color="#0d9488", hover_color="#0f766e", command=lambda: open_test_site())
         btn_test.grid(row=0, column=0, padx=5, sticky="ew")
 
@@ -1047,14 +1063,14 @@ class App(ctk.CTk):
 
         ctk.CTkLabel(
             bar,
-            text="DNS cache flushes automatically on every change. The ad-block test opens private (no extensions), so it scores your DNS only.",
+            text="Opens an Incognito / InPrivate browser window when available; otherwise uses your normal browser. Check the log for details.",
             font=ctk.CTkFont(size=11), text_color="gray55",
         ).grid(row=1, column=0, columnspan=2, pady=(7, 0))
 
         # ---------------- Behaviour ----------------
         def refresh_apply_state(busy=False):
             p = self.dns_selected
-            unusable = p is None or p.get("disabled", False)
+            unusable = p is None
             btn_apply.configure(state="disabled" if (busy or unusable) else "normal")
 
         def set_busy(busy):
@@ -1078,8 +1094,8 @@ class App(ctk.CTk):
                 log_text(dns_textbox, f"[OK] Opened the ad-block test in a {detail}:\n{AD_TEST_URL}\n")
             else:
                 webbrowser.open(AD_TEST_URL)
-                log_text(dns_textbox, f"[INFO] No private-capable browser found. Opened in the default browser:\n{AD_TEST_URL}\n")
-            log_text(dns_textbox, "A private window loads NO extensions, so the result reflects what your DNS blocks only.\n"
+                log_text(dns_textbox, f"[INFO] No supported private-window browser was found. Opened a normal browser window instead:\n{AD_TEST_URL}\n")
+            log_text(dns_textbox, "Private windows usually disable extensions, but check your browser's private-mode extension settings.\n"
                                   "Workflow: Apply DNS (cache flushes automatically) -> restart browser -> run the test -> compare providers.\n"
                                   "Turn OFF the browser's 'Secure DNS / DNS over HTTPS' first, "
                                   "otherwise the browser bypasses the Windows DNS.")
@@ -1087,7 +1103,10 @@ class App(ctk.CTk):
         def select(p):
             self.dns_selected = p
             for b, prov in self.dns_list_buttons:
-                b.configure(fg_color="#2563eb" if prov is p else "#27272a")
+                b.configure(
+                    fg_color="#2563eb" if prov is p else "#27272a",
+                    border_color="#60a5fa" if prov is p else "#3f3f46",
+                )
             lbl_name.configure(text=p["name"])
             lbl_tag.configure(text=f"  {p['tag']}  ", fg_color=TAG_COLORS.get(p["tag"], "#52525b"))
             ips = [f"Primary:   {p['servers'][0]}"]
@@ -1104,12 +1123,13 @@ class App(ctk.CTk):
             self.dns_list_buttons = []
             items = [p for p in PUBLIC_DNS if p["tag"] == tag]
             for i, p in enumerate(items):
-                b = ctk.CTkButton(list_frame, text=p["name"], height=46, anchor="w", corner_radius=8,
-                                  font=ctk.CTkFont(size=14, weight="bold"),
-                                  text_color="gray55" if p.get("disabled") else "white",
+                b = ctk.CTkButton(list_frame, text=p["name"], height=34, anchor="w", corner_radius=8,
+                                  font=ctk.CTkFont(size=12, weight="bold"),
+                                  border_width=1, border_color="#3f3f46",
+                                  text_color="white",
                                   fg_color="#27272a", hover_color="#3f3f46",
                                   command=lambda prov=p: select(prov))
-                b.grid(row=i, column=0, sticky="ew", padx=10, pady=(10 if i == 0 else 4, 4))
+                b.grid(row=i, column=0, sticky="ew", padx=10, pady=(6 if i == 0 else 2, 2))
                 self.dns_list_buttons.append((b, p))
             if items:
                 select(items[0])
